@@ -1,16 +1,15 @@
 ﻿using System;
-using Weapsy.Mvc.Controllers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Weapsy.Apps.Text.Reporting;
+using Weapsy.Apps.Text.Domain;
 using Weapsy.Apps.Text.Domain.Commands;
+using Weapsy.Apps.Text.Reporting;
 using Weapsy.Infrastructure.Dispatcher;
 using Weapsy.Mvc.Context;
-using Weapsy.Apps.Text.Domain;
+using Weapsy.Mvc.Controllers;
 
-namespace Weapsy.Apps.Text.Controllers
+namespace Weapsy.Apps.Text.Areas.Text.Controllers
 {
-    [Area("Text")]
     public class HomeController : BaseAdminController
     {
         private readonly ITextModuleFacade _textFacade;
