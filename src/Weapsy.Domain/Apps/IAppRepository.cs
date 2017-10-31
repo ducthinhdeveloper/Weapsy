@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Apps
 {
@@ -9,7 +8,6 @@ namespace Weapsy.Domain.Apps
         App GetById(Guid id);
         App GetByName(string name);
         App GetByFolder(string folder);
-        ICollection<App> GetAll();
         void Create(App app);
         void Update(App app);
     }

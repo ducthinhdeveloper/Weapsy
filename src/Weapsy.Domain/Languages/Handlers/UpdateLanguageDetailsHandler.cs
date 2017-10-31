@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Languages.Commands;
 using System;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Languages.Handlers
 {
@@ -11,13 +12,14 @@ namespace Weapsy.Domain.Languages.Handlers
         private readonly ILanguageRepository _languageRepository;
         private readonly IValidator<UpdateLanguageDetails> _validator;
 
-        public UpdateLanguageDetailsHandler(ILanguageRepository languageRepository, IValidator<UpdateLanguageDetails> validator)
+        public UpdateLanguageDetailsHandler(ILanguageRepository languageRepository, 
+            IValidator<UpdateLanguageDetails> validator)
         {
             _languageRepository = languageRepository;
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(UpdateLanguageDetails command)
+        public IEnumerable<IEvent> Handle(UpdateLanguageDetails command)
         {
             var language = _languageRepository.GetById(command.SiteId, command.Id);
 

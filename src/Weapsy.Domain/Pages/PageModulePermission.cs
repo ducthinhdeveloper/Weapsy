@@ -1,5 +1,5 @@
 ﻿using System;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Pages
 {
@@ -7,6 +7,6 @@ namespace Weapsy.Domain.Pages
     {
         public Guid PageModuleId { get; set; }  
         public PermissionType Type { get; set; }
-        public string RoleId { get; set; }
+        public Guid RoleId { get; set; }
     }
 }

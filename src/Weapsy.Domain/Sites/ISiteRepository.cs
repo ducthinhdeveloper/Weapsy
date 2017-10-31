@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Sites
 {
@@ -9,7 +8,6 @@ namespace Weapsy.Domain.Sites
         Site GetById(Guid id);
         Site GetByName(string name);
         Site GetByUrl(string url);
-        ICollection<Site> GetAll();
         void Create(Site site);
         void Update(Site site);
     }

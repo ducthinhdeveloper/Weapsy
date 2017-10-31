@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Sites.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Sites.Handlers
 {
@@ -14,7 +15,7 @@ namespace Weapsy.Domain.Sites.Handlers
             _siteRepository = siteRepository;
         }
 
-        public ICollection<IEvent> Handle(DeleteSite command)
+        public IEnumerable<IEvent> Handle(DeleteSite command)
         {
             var site = _siteRepository.GetById(command.Id);
 

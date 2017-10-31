@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.ModuleTypes.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.ModuleTypes.Handlers
 {
@@ -16,7 +17,7 @@ namespace Weapsy.Domain.ModuleTypes.Handlers
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(CreateModuleType command)
+        public IEnumerable<IEvent> Handle(CreateModuleType command)
         {
             var moduleType = ModuleType.CreateNew(command, _validator);
 

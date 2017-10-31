@@ -1,8 +1,8 @@
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Templates.Events
 {
-    public class TemplateActivated : Event
+    public class TemplateActivated : DomainEvent
     {
     }
 }

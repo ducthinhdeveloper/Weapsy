@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Commands;
 
 namespace Weapsy.Domain.Sites.Commands
 {
@@ -15,6 +15,7 @@ namespace Weapsy.Domain.Sites.Commands
         public Guid ThemeId { get; set; }
         public Guid PageTemplateId { get; set; }
         public Guid ModuleTemplateId { get; set; }
+        public bool AddLanguageSlug { get; set; }
 
         public List<SiteLocalisation> SiteLocalisations { get; set; } = new List<SiteLocalisation>();
     }

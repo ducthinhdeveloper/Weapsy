@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Pages.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Pages.Handlers
 {
@@ -14,7 +15,7 @@ namespace Weapsy.Domain.Pages.Handlers
             _pageRepository = pageRepository;
         }
 
-        public ICollection<IEvent> Handle(SetPagePermissions command)
+        public IEnumerable<IEvent> Handle(SetPagePermissions command)
         {
             var page = _pageRepository.GetById(command.SiteId, command.Id);
 

@@ -40,8 +40,8 @@ namespace Weapsy.Domain.Pages.Rules
 
         public bool IsPageNameUnique(Guid siteId, string name, Guid pageId = new Guid())
         {
-            var page = _pageRepository.GetByName(siteId, name);
-            return IsPageUnique(page, pageId);
+            var pageIdByName = _pageRepository.GetPageIdByName(siteId, name);
+            return pageIdByName == Guid.Empty || (pageId != Guid.Empty && pageIdByName == pageId);
         }
 
         public bool IsPageUrlValid(string url)
@@ -75,10 +75,14 @@ namespace Weapsy.Domain.Pages.Rules
             };
         }
 
-        public bool IsPageUrlUnique(Guid siteId, string url, Guid pageId = new Guid())
+        public bool IsSlugUnique(Guid siteId, string slug, Guid pageId = new Guid())
         {
-            var page = _pageRepository.GetByUrl(siteId, url);
-            return IsPageUnique(page, pageId);
+            if (string.IsNullOrWhiteSpace(slug))
+                return true;
+            var pageIdBySlug = _pageRepository.GetPageIdBySlug(siteId, slug);
+            var pageIdByLocalisedSlug = _pageRepository.GetPageIdByLocalisedSlug(siteId, slug);
+            return (pageIdBySlug == Guid.Empty || (pageId != Guid.Empty && pageIdBySlug == pageId))
+                && (pageIdByLocalisedSlug == Guid.Empty || (pageId != Guid.Empty && pageIdByLocalisedSlug == pageId));
         }
 
         private bool IsPageUnique(Page page, Guid pageId)

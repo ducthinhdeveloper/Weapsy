@@ -3,7 +3,10 @@
 weapsy.admin.userIndex = (function ($, ko) {
     function User(data) {
         this.id = ko.observable(data.id);
+        this.firstName = ko.observable(data.firstName);
+        this.surname = ko.observable(data.surname);
         this.email = ko.observable(data.email);
+        this.roles = ko.observable(data.roles);
         this.editUrl = "/admin/user/edit/" + data.id;
         this.rolesUrl = "/admin/user/roles/" + data.id;
     }
@@ -28,7 +31,7 @@ weapsy.admin.userIndex = (function ($, ko) {
 
         self.loadUsers = function () {
             self.startIndex(self.pageIndex() * self.numberOfUsers());
-            $.getJSON("/api/user?startIndex=" + self.startIndex() + "&numberOfUsers=" + self.numberOfUsers(), function (data) {
+            $.getJSON("/api/user/admin-list?startIndex=" + self.startIndex() + "&numberOfUsers=" + self.numberOfUsers(), function (data) {
                 var mappedUsers = $.map(data.users, function (item) { return new User(item) });
                 self.users(mappedUsers);
                 self.totalRecords = data.totalRecords;

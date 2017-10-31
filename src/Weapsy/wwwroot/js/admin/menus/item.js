@@ -14,11 +14,12 @@ weapsy.admin.menuItem = (function ($, ko) {
     }
 
     function MenuItemLocalisation(data) {
-        var languageName = data.languageName;
+        var tabLanguageName = data.languageName;
         if (data.languageStatus != 1)
-            languageName += " *";
+            tabLanguageName += " *";
+        this.tabLanguageName = ko.observable(tabLanguageName);
         this.languageId = ko.observable(data.languageId);
-        this.languageName = ko.observable(languageName);
+        this.languageName = ko.observable(data.languageName);
         this.languageStatus = ko.observable(data.languageStatus);
         this.text = ko.observable(data.text);
         this.title = ko.observable(data.title);
@@ -28,6 +29,7 @@ weapsy.admin.menuItem = (function ($, ko) {
         this.roleId = ko.observable(data.roleId);
         this.roleName = ko.observable(data.roleName);
         this.selected = ko.observable(data.selected);
+        this.disabled = ko.observable(data.disabled);
     }
 
     function Page(data) {
@@ -38,6 +40,7 @@ weapsy.admin.menuItem = (function ($, ko) {
     function Language(data) {
         this.id = data.id;
         this.name = data.name;
+        this.status = data.status;
     }
 
     function menuItemViewModel() {
@@ -46,7 +49,7 @@ weapsy.admin.menuItem = (function ($, ko) {
         self.menu = ko.observable();
         self.pages = ko.observableArray([]);
         self.languages = ko.observableArray([]);
-        self.menuItemToDelete = ko.observable();
+        self.deletable = ko.observable(false);
         self.confirmDeleteMenuItemMessage = ko.observable();
         self.showEditForm = ko.observable(false);
 
@@ -66,7 +69,7 @@ weapsy.admin.menuItem = (function ($, ko) {
         self.menuItemPermissions = ko.observableArray([]);
         self.menuItemLocalisationsNotActive = ko.computed(function () {
             return ko.utils.arrayFilter(self.menuItemLocalisations(), function (localisation) {
-                return localisation.languageStatus != 1;
+                return localisation.languageStatus() != 1;
             });
         });
 
@@ -80,7 +83,7 @@ weapsy.admin.menuItem = (function ($, ko) {
         }
 
         self.loadPages = function () {
-            $.getJSON("/api/page", function (data) {
+            $.getJSON("/api/page/admin-list", function (data) {
                 var mappedPages = $.map(data, function (item) { return new Page(item) });
                 self.pages(mappedPages);
                 self.loadLanguages();
@@ -100,32 +103,30 @@ weapsy.admin.menuItem = (function ($, ko) {
         }
 
         self.addMenuItem = function () {
-            self.menuItemId(self.emptyId);
-            self.menuItemType(self.itemTypes()[0].id);
-            self.pageId(self.pages()[0].id);
-            self.link("");
-            self.text("");
-            self.title("");
+            $.getJSON("/api/menu/" + self.menu().id() + "/admin-edit-default-item/", function (data) {
+                self.menuItemId(self.emptyId);
+                self.menuItemType(self.itemTypes()[0].id);
+                self.pageId(self.pages()[0].id);
+                self.link("");
+                self.text("");
+                self.title("");
+                self.menuItemLocalisations([]);
+                self.menuItemPermissions([]);
 
-            self.menuItemLocalisations([]);
-            self.menuItemPermissions([]);
+                var mappedLocalisations = $.map(data.menuItemLocalisations, function (item) { return new MenuItemLocalisation(item) });
+                self.menuItemLocalisations(mappedLocalisations);
 
-            $.each(self.languages(), function () {
-                var item = this;
-                self.menuItemLocalisations.push(new MenuItemLocalisation({
-                    languageId: item.id,
-                    languageName: item.name,
-                    text: '',
-                    title: ''
-                }));
+                var mappedPermissions = $.map(data.menuItemPermissions, function (item) { return new MenuItemPermission(item) });
+                self.menuItemPermissions(mappedPermissions);
+
+                self.showEditForm(true);
+
+                self.setValidator();
             });
-
-            self.showEditForm(true);
-
-            self.setValidator();
         };
 
         self.editMenuItem = function (id) {
+            self.deletable(true);
             $.getJSON("/api/menu/" + self.menu().id() + "/admin-edit-item/" + id, function (data) {
                 self.menuItemId(id);
                 self.menuItemType(data.type);
@@ -200,7 +201,7 @@ weapsy.admin.menuItem = (function ($, ko) {
         };
 
         self.saveMenuItem = function () {
-            $('#savingMenuItem').show();
+            weapsy.utils.showLoading("Saving Menu Item");
 
             var localisations = [];
             var permissions = [];
@@ -244,19 +245,16 @@ weapsy.admin.menuItem = (function ($, ko) {
                 contentType: 'application/json'
             }).done(function () {
                 window.location.href = '/admin/menu';
-            }).fail(function () {
-                $('#savingMenuItem').hide();
             });
         }
 
-        self.confirmMenuItemToDelete = function (item) {
-            self.menuItemToDelete(item);
-            self.confirmDeleteMenuItemMessage("Are you sure you want to delete " + item.text() + " and all descendants?");
+        self.confirmMenuItemToDelete = function () {
         }
 
         self.deleteMenuItem = function () {
+            weapsy.utils.showLoading("Deleting Menu Item");
             $.ajax({
-                url: "/api/menu/" + self.menu().id() + "/item/" + self.menuItemToDelete().id(),
+                url: "/api/menu/" + self.menu().id() + "/item/" + self.menuItemId(),
                 type: "DELETE"
             }).done(function () {
                 window.location.href = '/admin/menu';

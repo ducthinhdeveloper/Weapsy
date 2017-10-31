@@ -6,52 +6,33 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
-using Weapsy.Models;
 using Weapsy.Models.AccountViewModels;
 using Weapsy.Services;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Weapsy.Infrastructure.Dispatcher;
-using Weapsy.Domain.Users.Events;
-using System;
-using FluentValidation;
-using Weapsy.Domain.Users.Commands;
-using Weapsy.Domain.Users;
+using User = Weapsy.Data.Entities.User;
 
 namespace Weapsy.Controllers
 {
     [Authorize]
     public class AccountController : Controller
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
         private readonly IEmailSender _emailSender;
         private readonly ISmsSender _smsSender;
         private readonly ILogger _logger;
-        private readonly IEventPublisher _eventPublisher;
-        private readonly IUserRepository _userRepository;
-        private readonly IValidator<CreateUser> _validator;
 
         public AccountController(
-            UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager,
-            RoleManager<IdentityRole> roleManager,
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
             IEmailSender emailSender,
             ISmsSender smsSender,
-            ILoggerFactory loggerFactory,
-            IEventPublisher eventPublisher, 
-            IUserRepository userRepository, 
-            IValidator<CreateUser> validator)
+            ILoggerFactory loggerFactory)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _roleManager = roleManager;
             _emailSender = emailSender;
             _smsSender = smsSender;
             _logger = loggerFactory.CreateLogger<AccountController>();
-            _eventPublisher = eventPublisher;
-            _userRepository = userRepository;
-            _validator = validator;
         }
 
         //
@@ -84,7 +65,7 @@ namespace Weapsy.Controllers
                 }
                 if (result.RequiresTwoFactor)
                 {
-                    return RedirectToAction(nameof(SendCode), new { ReturnUrl = returnUrl, RememberMe = model.RememberMe });
+                    return RedirectToAction(nameof(SendCode), new { ReturnUrl = returnUrl, model.RememberMe });
                 }
                 if (result.IsLockedOut)
                 {
@@ -122,28 +103,10 @@ namespace Weapsy.Controllers
             ViewData["ReturnUrl"] = returnUrl;
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+                var user = new User { UserName = model.Email, Email = model.Email };
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    //_eventPublisher.Publish(new UserRegistered
-                    //{
-                    //    AggregateRootId = new Guid(user.Id),
-                    //    Email = user.Email,
-                    //    UserName = user.UserName
-                    //});
-
-                    var command = new CreateUser
-                    {
-                        Id = new Guid(user.Id),
-                        Email = user.Email,
-                        UserName = user.UserName
-                    };
-
-                    var newUser = Weapsy.Domain.Users.User.CreateNew(command, _validator);
-
-                    _userRepository.Create(newUser);
-
                     // For more information on how to enable account confirmation and password reset please visit http://go.microsoft.com/fwlink/?LinkID=532713
                     // Send an email with this link
                     //var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -242,7 +205,7 @@ namespace Weapsy.Controllers
                 {
                     return View("ExternalLoginFailure");
                 }
-                var user = new IdentityUser { UserName = model.Email, Email = model.Email };
+                var user = new User { UserName = model.Email, Email = model.Email };
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
@@ -350,12 +313,12 @@ namespace Weapsy.Controllers
             if (user == null)
             {
                 // Don't reveal that the user does not exist
-                return RedirectToAction(nameof(AccountController.ResetPasswordConfirmation), "Account");
+                return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
             }
             var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
             if (result.Succeeded)
             {
-                return RedirectToAction(nameof(AccountController.ResetPasswordConfirmation), "Account");
+                return RedirectToAction(nameof(ResetPasswordConfirmation), "Account");
             }
             AddErrors(result);
             return View();
@@ -421,7 +384,7 @@ namespace Weapsy.Controllers
                 await _smsSender.SendSmsAsync(await _userManager.GetPhoneNumberAsync(user), message);
             }
 
-            return RedirectToAction(nameof(VerifyCode), new { Provider = model.SelectedProvider, ReturnUrl = model.ReturnUrl, RememberMe = model.RememberMe });
+            return RedirectToAction(nameof(VerifyCode), new { Provider = model.SelectedProvider, model.ReturnUrl, model.RememberMe });
         }
 
         //
@@ -464,11 +427,8 @@ namespace Weapsy.Controllers
                 _logger.LogWarning(7, "User account locked out.");
                 return View("Lockout");
             }
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Invalid code.");
-                return View(model);
-            }
+            ModelState.AddModelError(string.Empty, "Invalid code.");
+            return View(model);
         }
 
         #region Helpers
@@ -481,21 +441,13 @@ namespace Weapsy.Controllers
             }
         }
 
-        private Task<IdentityUser> GetCurrentUserAsync()
-        {
-            return _userManager.GetUserAsync(HttpContext.User);
-        }
-
         private IActionResult RedirectToLocal(string returnUrl)
         {
             if (Url.IsLocalUrl(returnUrl))
             {
                 return Redirect(returnUrl);
             }
-            else
-            {
-                return RedirectToAction(nameof(HomeController.Index), "Home");
-            }
+            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
         #endregion

@@ -1,6 +1,6 @@
 ﻿using System;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Pages.Commands;
 using Weapsy.Domain.Pages.Events;
 using System.Collections.Generic;
@@ -26,9 +26,7 @@ namespace Weapsy.Domain.Pages
         public ICollection<PageModule> PageModules { get; private set; } = new List<PageModule>();
         public ICollection<PagePermission> PagePermissions { get; private set; } = new List<PagePermission>();
 
-        public Page()
-        {
-        }
+        public Page() {}
 
         private Page(CreatePage cmd) : base(cmd.Id)
         {
@@ -48,7 +46,8 @@ namespace Weapsy.Domain.Pages
                 MetaKeywords = MetaKeywords,
                 PageLocalisations = PageLocalisations,
                 PagePermissions = PagePermissions,
-                Status = Status
+                Status = Status,
+                MenuIds = cmd.MenuIds
             });
         }
 
@@ -139,7 +138,7 @@ namespace Weapsy.Domain.Pages
         {
             validator.ValidateCommand(cmd);
 
-            AddModule(new PageModule(cmd.PageId, cmd.PageModuleId, cmd.ModuleId, cmd.Title, cmd.Zone, cmd.SortOrder));
+            AddModule(new PageModule(cmd.PageId, cmd.PageModuleId, cmd.ModuleId, cmd.Title, cmd.Zone, cmd.SortOrder, cmd.PageModulePermissions));
         }
 
         public void AddModule(PageModule pageModule)

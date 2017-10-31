@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Modules;
 using Weapsy.Domain.Modules.Commands;
 using Weapsy.Domain.Pages.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
+
 //using System.Transactions;
 
 namespace Weapsy.Domain.Pages.Handlers
@@ -27,9 +30,9 @@ namespace Weapsy.Domain.Pages.Handlers
             _addPageModuleValidator = addPageModuleValidator;
         }
 
-        public ICollection<IEvent> Handle(AddModule cmd)
+        public IEnumerable<IEvent> Handle(AddModule cmd)
         {
-            var events = new List<IEvent>();
+            var events = new List<IDomainEvent>();
 
             //using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
             //{
@@ -59,7 +62,8 @@ namespace Weapsy.Domain.Pages.Handlers
                     PageModuleId = Guid.NewGuid(),
                     Title = cmd.Title,
                     Zone = cmd.Zone,
-                    SortOrder = cmd.SortOrder
+                    SortOrder = cmd.SortOrder,
+                    PageModulePermissions = cmd.PageModulePermissions
                 }, _addPageModuleValidator);
                 events.AddRange(page.Events);
                 _pageRepository.Update(page);

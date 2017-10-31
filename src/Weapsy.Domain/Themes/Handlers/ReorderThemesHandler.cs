@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Themes.Commands;
 using System;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Themes.Handlers
 {
@@ -14,9 +16,9 @@ namespace Weapsy.Domain.Themes.Handlers
             _themeRepository = themeRepository;
         }
 
-        public ICollection<IEvent> Handle(ReorderThemes cmd)
+        public IEnumerable<IEvent> Handle(ReorderThemes cmd)
         {
-            var events = new List<IEvent>();
+            var events = new List<IDomainEvent>();
             var updatedThemes = new List<Theme>();
 
             for (int i = 0; i < cmd.Themes.Count; i++)

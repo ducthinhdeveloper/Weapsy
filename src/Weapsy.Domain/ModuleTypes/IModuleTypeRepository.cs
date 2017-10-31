@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.ModuleTypes
 {
@@ -9,7 +8,6 @@ namespace Weapsy.Domain.ModuleTypes
         ModuleType GetById(Guid id);
         ModuleType GetByName(string name);
         ModuleType GetByViewComponentName(string viewComponentName);
-        ICollection<ModuleType> GetAll();
         void Create(ModuleType moduleType);
         void Update(ModuleType moduleType);
     }

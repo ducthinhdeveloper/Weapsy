@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Pages.Commands;
-using Weapsy.Infrastructure.Identity;
+using Weapsy.Domain.Roles.DefaultRoles;
 
 namespace Weapsy.Domain.Pages
 {
@@ -20,11 +20,16 @@ namespace Weapsy.Domain.Pages
         public ICollection<PageModuleLocalisation> PageModuleLocalisations { get; private set; } = new List<PageModuleLocalisation>();
         public ICollection<PageModulePermission> PageModulePermissions { get; private set; } = new List<PageModulePermission>();
 
-        public PageModule()
-        {
-        }
+        public PageModule() {}
 
-        public PageModule(Guid pageId, Guid id, Guid moduleId, string title, string zone, int sortOrder) : base(id)
+        public PageModule(Guid pageId, 
+            Guid id, 
+            Guid moduleId, 
+            string title, 
+            string zone, 
+            int sortOrder,
+            IList<PageModulePermission> pageModulePermissions) 
+            : base(id)
         {
             PageId = pageId;
             ModuleId = moduleId;
@@ -32,7 +37,8 @@ namespace Weapsy.Domain.Pages
             Zone = zone;
             SortOrder = sortOrder;
             Status = PageModuleStatus.Active;
-            InheritPermissions = true;
+            InheritPermissions = false;
+            SetPermissions(pageModulePermissions);
         }
 
         public void UpdateDetails(UpdatePageModuleDetails cmd)
@@ -44,7 +50,7 @@ namespace Weapsy.Domain.Pages
             SetPermissions(cmd.PageModulePermissions);
         }
 
-        private void SetLocalisations(List<PageModuleLocalisation> pageModuleLocalisations)
+        private void SetLocalisations(IList<PageModuleLocalisation> pageModuleLocalisations)
         {
             PageModuleLocalisations.Clear();
 
@@ -83,7 +89,7 @@ namespace Weapsy.Domain.Pages
                 PageModulePermissions.Add(new PageModulePermission
                 {
                     PageModuleId = Id,
-                    RoleId = ((int)DefaultRoles.Everyone).ToString(),
+                    RoleId = Everyone.Id,
                     Type = PermissionType.View
                 });
         }

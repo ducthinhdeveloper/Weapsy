@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Users.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
+using System.Threading.Tasks;
 
 namespace Weapsy.Domain.Users.Handlers
 {
-    public class CreateUserHandler : ICommandHandler<CreateUser>
+    public class CreateUserHandler : ICommandHandlerAsync<CreateUser>
     {
         private readonly IUserRepository _userRepository;
         private readonly IValidator<CreateUser> _validator;
@@ -16,11 +18,11 @@ namespace Weapsy.Domain.Users.Handlers
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(CreateUser command)
+        public async Task<IEnumerable<IEvent>> HandleAsync(CreateUser command)
         {
             var user = User.CreateNew(command, _validator);
 
-            _userRepository.Create(user);
+            await _userRepository.CreateAsync(user);
 
             return user.Events;
         }

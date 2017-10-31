@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Pages.Commands;
 using System;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Pages.Handlers
 {
@@ -18,7 +19,7 @@ namespace Weapsy.Domain.Pages.Handlers
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(UpdatePageModuleDetails command)
+        public IEnumerable<IEvent> Handle(UpdatePageModuleDetails command)
         {
             var page = _pageRepository.GetById(command.SiteId, command.PageId);
 

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Pages.Events
 {
-    public class PageModulePermissionsSet : Event
+    public class PageModulePermissionsSet : DomainEvent
     {
         public Guid SiteId { get; set; }
         public Guid PageModuleId { get; set; }

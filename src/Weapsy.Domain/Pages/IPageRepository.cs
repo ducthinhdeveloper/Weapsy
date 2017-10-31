@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Pages
 {
@@ -8,11 +7,9 @@ namespace Weapsy.Domain.Pages
     {
         Page GetById(Guid id);
         Page GetById(Guid siteId, Guid id);
-        Page GetByName(Guid siteId, string name);
-        Page GetByUrl(Guid siteId, string url);
-        Guid? GetIdBySlug(Guid siteId, string slug);
-        Guid? GetIdBySlug(Guid siteId, string slug, Guid languageId);
-        ICollection<Page> GetAll(Guid siteId);
+        Guid GetPageIdByName(Guid siteId, string name);
+        Guid GetPageIdBySlug(Guid siteId, string slug);
+        Guid GetPageIdByLocalisedSlug(Guid siteId, string slug);
         void Create(Page page);
         void Update(Page page);
     }

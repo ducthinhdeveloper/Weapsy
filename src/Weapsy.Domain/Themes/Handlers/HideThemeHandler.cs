@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Themes.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Themes.Handlers
 {
@@ -14,7 +15,7 @@ namespace Weapsy.Domain.Themes.Handlers
             _themeRepository = themeRepository;
         }
 
-        public ICollection<IEvent> Handle(HideTheme command)
+        public IEnumerable<IEvent> Handle(HideTheme command)
         {
             var theme = _themeRepository.GetById(command.Id);
 

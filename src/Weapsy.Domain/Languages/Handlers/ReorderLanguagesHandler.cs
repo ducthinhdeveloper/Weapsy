@@ -1,8 +1,10 @@
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Languages.Commands;
 using System;
 using Weapsy.Domain.Sites.Rules;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Languages.Handlers
 {
@@ -17,12 +19,12 @@ namespace Weapsy.Domain.Languages.Handlers
             _siteRules = siteRules;
         }
 
-        public ICollection<IEvent> Handle(ReorderLanguages cmd)
+        public IEnumerable<IEvent> Handle(ReorderLanguages cmd)
         {
             if (!_siteRules.DoesSiteExist(cmd.SiteId))
                 throw new Exception("Site does not exist.");
 
-            var events = new List<IEvent>();
+            var events = new List<IDomainEvent>();
             var updatedLanguages = new List<Language>();
 
             for (int i = 0; i < cmd.Languages.Count; i++)

@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Mvc.Context;
 using Weapsy.Mvc.Controllers;
 
@@ -17,13 +15,6 @@ namespace Weapsy.Api
             : base(contextService)
         {
             _eventStore = eventStore;
-        }
-
-        [HttpGet("{aggregateId}")]
-        public async Task<IActionResult> Get(Guid aggregateId)
-        {
-            var events = await _eventStore.GetEvents(aggregateId);
-            return Ok(events);
         }
     }
 }

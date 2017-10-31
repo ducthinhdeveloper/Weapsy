@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.EmailAccounts
 {
@@ -8,8 +7,7 @@ namespace Weapsy.Domain.EmailAccounts
     {
         EmailAccount GetById(Guid id);
         EmailAccount GetById(Guid siteId, Guid id);
-        EmailAccount GetByAddress(Guid siteId, string address);
-        ICollection<EmailAccount> GetAll(Guid siteId);       
+        EmailAccount GetByAddress(Guid siteId, string address);    
         void Create(EmailAccount language);
         void Update(EmailAccount language);
     }

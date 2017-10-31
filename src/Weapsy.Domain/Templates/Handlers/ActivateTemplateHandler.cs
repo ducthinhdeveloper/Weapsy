@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Templates.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Templates.Handlers
 {
@@ -14,7 +15,7 @@ namespace Weapsy.Domain.Templates.Handlers
             _templateRepository = templateRepository;
         }
 
-        public ICollection<IEvent> Handle(ActivateTemplate command)
+        public IEnumerable<IEvent> Handle(ActivateTemplate command)
         {
             var template = _templateRepository.GetById(command.Id);
 

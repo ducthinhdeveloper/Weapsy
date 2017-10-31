@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Menus.Events
 {
-    public class MenuItemPermissionsSet : Event
+    public class MenuItemPermissionsSet : DomainEvent
     {
         public Guid SiteId { get; set; }
         public Guid MenuItemId { get; set; }

@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Weapsy.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Weapsy.Reporting.Sites;
-using Weapsy.Infrastructure.Dispatcher;
 using Weapsy.Domain.Sites.Rules;
 using Weapsy.Domain.Sites.Commands;
 using Weapsy.Domain.Sites;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
+using Weapsy.Reporting.Sites.Queries;
 
 namespace Weapsy.Api
 {
@@ -15,18 +16,19 @@ namespace Weapsy.Api
     public class SiteController : BaseAdminController
     {
         private readonly ICommandSender _commandSender;
-        private readonly ISiteFacade _siteFacade;        
+        private readonly IQueryDispatcher _queryDispatcher;
         private readonly ISiteRules _siteRules;
 
         public SiteController(ICommandSender commandSender,
-            ISiteFacade siteFacade,
+            IQueryDispatcher queryDispatcher,
             ISiteRules siteRules,
             IContextService contextService)
             : base(contextService)
         {
-            _siteFacade = siteFacade;
             _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
             _siteRules = siteRules;
+            
         }
 
         [HttpGet]
@@ -42,41 +44,41 @@ namespace Weapsy.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CreateSite model)
+        public IActionResult Post([FromBody] CreateSite model)
         {
             model.Id = Guid.NewGuid();
-            await Task.Run(() => _commandSender.Send<CreateSite, Site>(model));
+            _commandSender.Send<CreateSite, Site>(model);
             return new NoContentResult();
         }
 
         [HttpPut]
         [Route("{id}/update")]
-        public async Task<IActionResult> UpdateDetails([FromBody] UpdateSiteDetails model)
+        public IActionResult UpdateDetails([FromBody] UpdateSiteDetails model)
         {
-            await Task.Run(() => _commandSender.Send<UpdateSiteDetails, Site>(model));
+            _commandSender.Send<UpdateSiteDetails, Site>(model);
             return new NoContentResult();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public IActionResult Delete(Guid id)
         {
-            await Task.Run(() => _commandSender.Send<DeleteSite, Site>(new DeleteSite { Id = id }));
+            _commandSender.Send<DeleteSite, Site>(new DeleteSite { Id = id });
             return new NoContentResult();
         }
 
         [HttpGet("{name}")]
         [Route("isSiteNameUnique")]
-        public async Task<IActionResult> IsSiteNameUnique(string name)
+        public IActionResult IsSiteNameUnique(string name)
         {
-            var isSiteNameUnique = await Task.Run(() => _siteRules.IsSiteNameUnique(name));
+            var isSiteNameUnique = _siteRules.IsSiteNameUnique(name);
             return Ok(isSiteNameUnique);
         }
 
         [HttpGet]
         [Route("{id}/admin-edit")]
-        public async Task<IActionResult> AdminEdit(Guid id)
+        public IActionResult AdminEdit(Guid id)
         {
-            var model = await Task.Run(() => _siteFacade.GetAdminModel(id));
+            var model = _queryDispatcher.DispatchAsync<GetAdminModel, SiteAdminModel>(new GetAdminModel { Id = id });
 
             if (model == null)
                 return NotFound();

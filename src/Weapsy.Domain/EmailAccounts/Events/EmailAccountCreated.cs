@@ -1,9 +1,9 @@
 ﻿using System;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.EmailAccounts.Events
 {
-    public class EmailAccountCreated : Event
+    public class EmailAccountCreated : DomainEvent
     {
         public Guid SiteId { get; set; }
         public string Address { get; set; }

@@ -1,33 +1,36 @@
 ﻿using System;
+using System.Collections.Generic;
 using Weapsy.Mvc.Controllers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Weapsy.Reporting.EmailAccounts;
 using Weapsy.Domain.EmailAccounts;
 using Weapsy.Domain.EmailAccounts.Commands;
-using Weapsy.Infrastructure.Dispatcher;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
+using Weapsy.Reporting.EmailAccounts.Queries;
 
 namespace Weapsy.Areas.Admin.Controllers
 {
     [Area("Admin")]
     public class EmailAccountController : BaseAdminController
     {
-        private readonly IEmailAccountFacade _emailAccountFacade;
         private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
 
-        public EmailAccountController(IEmailAccountFacade emailAccountFacade,
-            ICommandSender commandSender,
+        public EmailAccountController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,
             IContextService contextService)
             : base(contextService)
         {
-            _emailAccountFacade = emailAccountFacade;
             _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var model = _emailAccountFacade.GetAll(SiteId);
+            var model = await _queryDispatcher.DispatchAsync<GetAllEmailAccounts, IEnumerable<EmailAccountModel>>(new GetAllEmailAccounts { SiteId = SiteId });
             return View(model);
         }
 
@@ -37,17 +40,17 @@ namespace Weapsy.Areas.Admin.Controllers
             return View(model);
         }
 
-        public async Task<IActionResult> Save(CreateEmailAccount model)
+        public IActionResult Save(CreateEmailAccount model)
         {
             model.SiteId = SiteId;
             model.Id = Guid.NewGuid();
-            await Task.Run(() => _commandSender.Send<CreateEmailAccount, EmailAccount>(model));
+            _commandSender.Send<CreateEmailAccount, EmailAccount>(model);
             return new NoContentResult();
         }
 
-        public IActionResult Edit(Guid id)
+        public async Task<IActionResult> Edit(Guid id)
         {
-            var model = _emailAccountFacade.Get(SiteId, id);
+            var model = await _queryDispatcher.DispatchAsync<GetEmailAccount, EmailAccountModel>(new GetEmailAccount { SiteId = SiteId, Id = id });
 
             if (model == null)
                 return NotFound();
@@ -55,10 +58,10 @@ namespace Weapsy.Areas.Admin.Controllers
             return View(model);
         }
 
-        public async Task<IActionResult> Update(UpdateEmailAccountDetails model)
+        public IActionResult Update(UpdateEmailAccountDetails model)
         {
             model.SiteId = SiteId;
-            await Task.Run(() => _commandSender.Send<UpdateEmailAccountDetails, EmailAccount>(model));
+            _commandSender.Send<UpdateEmailAccountDetails, EmailAccount>(model);
             return new NoContentResult();
         }
     }

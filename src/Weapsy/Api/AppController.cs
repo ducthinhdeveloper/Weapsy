@@ -1,101 +1,94 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Weapsy.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Weapsy.Reporting.Apps;
-using Weapsy.Infrastructure.Dispatcher;
 using Weapsy.Domain.Apps.Rules;
 using Weapsy.Domain.Apps.Commands;
 using Weapsy.Domain.Apps;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
+using Weapsy.Reporting.Apps.Queries;
 
 namespace Weapsy.Api
 {
     [Route("api/[controller]")]
     public class AppController : BaseAdminController
     {
-        private readonly IAppFacade _appFacade;
         private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
         private readonly IAppRules _appRules;
 
-        public AppController(IAppFacade appFacade,
-            ICommandSender commandSender,
+        public AppController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,
             IAppRules appRules,
             IContextService contextService)
             : base(contextService)
         {
-            _appFacade = appFacade;
             _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
             _appRules = appRules;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public IActionResult Get()
         {
-            var apps = await Task.Run(() => _appFacade.GetAllForAdmin());
-            return Ok(apps);
+            throw new NotImplementedException();
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(Guid id)
+        public IActionResult Get(Guid id)
         {
-            var app = await Task.Run(() => _appFacade.GetAdminModel(id));
-            if (app == null) return NotFound();
-            return Ok(app);
+            throw new NotImplementedException();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CreateApp model)
+        public IActionResult Post([FromBody] CreateApp model)
         {
             model.Id = Guid.NewGuid();
-            await Task.Run(() => _commandSender.Send<CreateApp, App>(model));
+            _commandSender.Send<CreateApp, App>(model);
             return new NoContentResult();
         }
 
         [HttpPut]
         [Route("{id}/update")]
-        public async Task<IActionResult> UpdateDetails([FromBody] UpdateAppDetails model)
+        public IActionResult UpdateDetails([FromBody] UpdateAppDetails model)
         {
-            await Task.Run(() => _commandSender.Send<UpdateAppDetails, App>(model));
+            _commandSender.Send<UpdateAppDetails, App>(model);
             return new NoContentResult();
         }
 
-        //[HttpDelete("{id}")]
-        //public async Task<IActionResult> Delete(Guid id)
-        //{
-        //    await Task.Run(() => _commandSender.Send<DeleteApp, App>(new DeleteApp { Id = id }));
-        //    return new NoContentResult();
-        //}
-
         [HttpGet("{name}")]
         [Route("isAppNameUnique")]
-        public async Task<IActionResult> IsAppNameUnique(string name)
+        public IActionResult IsAppNameUnique(string name)
         {
-            var isAppNameUnique = await Task.Run(() => _appRules.IsAppNameUnique(name));
+            var isAppNameUnique = _appRules.IsAppNameUnique(name);
             return Ok(isAppNameUnique);
         }
 
         [HttpGet("{folder}")]
         [Route("isAppFolderUnique")]
-        public async Task<IActionResult> IsAppFolderUnique(string folder)
+        public IActionResult IsAppFolderUnique(string folder)
         {
-            var isAppFolderUnique = await Task.Run(() => _appRules.IsAppFolderUnique(folder));
+            var isAppFolderUnique = _appRules.IsAppFolderUnique(folder);
             return Ok(isAppFolderUnique);
         }
 
         [HttpGet("{folder}")]
-        [Route("isAppFolderUnique")]
-        public async Task<IActionResult> IsAppFolderValid(string folder)
+        [Route("isAppFolderValid")]
+        public IActionResult IsAppFolderValid(string folder)
         {
-            var isAppFolderValid = await Task.Run(() => _appRules.IsAppFolderValid(folder));
+            var isAppFolderValid = _appRules.IsAppFolderValid(folder);
             return Ok(isAppFolderValid);
         }
 
         [HttpGet]
-        [Route("{id}/admin-list")]
+        [Route("admin-list")]
         public async Task<IActionResult> AdminList()
         {
-            var model = await Task.Run(() => _appFacade.GetAllForAdmin());
+            var model = await _queryDispatcher.DispatchAsync<GetAppAdminModelList, IEnumerable<AppAdminListModel>>(new GetAppAdminModelList());
             return Ok(model);
         }
 
@@ -103,8 +96,11 @@ namespace Weapsy.Api
         [Route("{id}/admin-edit")]
         public async Task<IActionResult> AdminEdit(Guid id)
         {
-            var model = await Task.Run(() => _appFacade.GetAdminModel(id));
-            if (model == null) return NotFound();
+            var model = await _queryDispatcher.DispatchAsync<GetAppAdminModel, AppAdminModel>(new GetAppAdminModel {Id = id});
+
+            if (model == null)
+                return NotFound();
+
             return Ok(model);
         }
     }

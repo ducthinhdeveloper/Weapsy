@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Identity;
+using System.Threading.Tasks;
 using Weapsy.Domain.Languages;
 using Weapsy.Domain.Languages.Commands;
 using Weapsy.Domain.Menus;
@@ -13,7 +13,10 @@ using Weapsy.Domain.Pages;
 using Weapsy.Domain.Pages.Commands;
 using Weapsy.Domain.Sites;
 using Weapsy.Domain.Sites.Commands;
-using Weapsy.Services.Identity;
+using Weapsy.Framework.Commands;
+using Weapsy.Domain.Roles.DefaultRoles;
+using Weapsy.Framework.Queries;
+using Weapsy.Reporting.Sites.Queries;
 
 namespace Weapsy.Services.Installation
 {
@@ -22,7 +25,7 @@ namespace Weapsy.Services.Installation
     {
         private readonly ISiteRepository _siteRepository;
         private readonly IValidator<CreateSite> _createSiteValidator;
-        private readonly IValidator<UpdateSiteDetails> _updateSiteDetailsSiteValidator;
+        private readonly IValidator<UpdateSiteDetails> _updateSiteDetailsValidator;
         private readonly ILanguageRepository _languageRepository;
         private readonly IValidator<CreateLanguage> _createLanguageValidator;
         private readonly IValidator<ActivateLanguage> _activateLanguageValidator;
@@ -37,11 +40,12 @@ namespace Weapsy.Services.Installation
         private readonly IValidator<CreateMenu> _createMenuValidator;
         private readonly IValidator<AddMenuItem> _addMenuItemValidator;
         private readonly IModuleTypeRepository _moduleTypeRepository;
-        private readonly IRoleService _roleService;
+        private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
 
         public SiteInstallationService(ISiteRepository siteRepository,
             IValidator<CreateSite> createSiteValidator,
-            IValidator<UpdateSiteDetails> updateSiteDetailsSiteValidator,
+            IValidator<UpdateSiteDetails> updateSiteDetailsValidator,
             ILanguageRepository languageRepository,
             IValidator<CreateLanguage> createLanguageValidator,
             IValidator<ActivateLanguage> activateLanguageValidator,
@@ -55,12 +59,13 @@ namespace Weapsy.Services.Installation
             IMenuRepository menuRepository,
             IValidator<CreateMenu> createMenuValidator,
             IValidator<AddMenuItem> addMenuItemValidator,
-            IModuleTypeRepository moduleTypeRepository,
-            IRoleService roleService)
+            IModuleTypeRepository moduleTypeRepository, 
+            ICommandSender commandSender, 
+            IQueryDispatcher queryDispatcher)
         {
             _siteRepository = siteRepository;
             _createSiteValidator = createSiteValidator;
-            _updateSiteDetailsSiteValidator = updateSiteDetailsSiteValidator;
+            _updateSiteDetailsValidator = updateSiteDetailsValidator;
             _languageRepository = languageRepository;
             _createLanguageValidator = createLanguageValidator;
             _activateLanguageValidator = activateLanguageValidator;
@@ -75,7 +80,8 @@ namespace Weapsy.Services.Installation
             _createMenuValidator = createMenuValidator;
             _addMenuItemValidator = addMenuItemValidator;
             _moduleTypeRepository = moduleTypeRepository;
-            _roleService = roleService;
+            _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
         }
 
         public void VerifySiteInstallation()
@@ -122,21 +128,26 @@ namespace Weapsy.Services.Installation
 
             // ===== Pages ===== //
 
-            var pagePermisisons = new List<PagePermission>();
-
-            foreach (var roleId in _roleService.GetDefaultPageViewPermissionRoleIds().Result)
-                pagePermisisons.Add(new PagePermission
+            var pagePermisisons = new List<PagePermission>
+            {
+                new PagePermission
                 {
-                    RoleId = roleId,
+                    RoleId = Everyone.Id,
                     Type = PermissionType.View
-                });
+                }
+            };
 
-            foreach (var roleId in _roleService.GetDefaultPageEditPermissionRoleIds().Result)
-                pagePermisisons.Add(new PagePermission
-                {
-                    RoleId = roleId,
-                    Type = PermissionType.Edit
-                });
+            pagePermisisons.Add(new PagePermission
+            {
+                RoleId = Administrator.Id,
+                Type = PermissionType.View
+            });
+
+            pagePermisisons.Add(new PagePermission
+            {
+                RoleId = Administrator.Id,
+                Type = PermissionType.Edit
+            });
 
             var homePage = Page.CreateNew(new CreatePage
             {
@@ -210,6 +221,27 @@ namespace Weapsy.Services.Installation
 
             // Update Home Page
 
+            var pageModulePermisisons = new List<PageModulePermission>
+            {
+                new PageModulePermission
+                {
+                    RoleId = Everyone.Id,
+                    Type = PermissionType.View
+                }
+            };
+
+            pageModulePermisisons.Add(new PageModulePermission
+            {
+                RoleId = Administrator.Id,
+                Type = PermissionType.View
+            });
+
+            pageModulePermisisons.Add(new PageModulePermission
+            {
+                RoleId = Administrator.Id,
+                Type = PermissionType.Edit
+            });
+
             homePage.AddModule(new AddPageModule
             {
                 SiteId = siteId,
@@ -218,7 +250,8 @@ namespace Weapsy.Services.Installation
                 PageModuleId = Guid.NewGuid(),
                 Title = "Content",
                 Zone = "Content",
-                SortOrder = 1
+                SortOrder = 1,
+                PageModulePermissions = pageModulePermisisons
             }, _addPageModuleValidator);
 
             homePage.AddModule(new AddPageModule
@@ -229,7 +262,8 @@ namespace Weapsy.Services.Installation
                 PageModuleId = Guid.NewGuid(),
                 Title = "Left",
                 Zone = "Left",
-                SortOrder = 1
+                SortOrder = 1,
+                PageModulePermissions = pageModulePermisisons
             }, _addPageModuleValidator);
 
             homePage.AddModule(new AddPageModule
@@ -240,7 +274,8 @@ namespace Weapsy.Services.Installation
                 PageModuleId = Guid.NewGuid(),
                 Title = "Right",
                 Zone = "Right",
-                SortOrder = 1
+                SortOrder = 1,
+                PageModulePermissions = pageModulePermisisons
             }, _addPageModuleValidator);
 
             _pageRepository.Update(homePage);
@@ -275,7 +310,7 @@ namespace Weapsy.Services.Installation
                 {
                     new MenuItemPermission
                     {
-                        RoleId = DefaultRoles.Everyone.ToString()
+                        RoleId = Everyone.Id
                     }
                 }
             }, _addMenuItemValidator);
@@ -288,6 +323,9 @@ namespace Weapsy.Services.Installation
             {
                 SiteId = siteId,
                 HomePageId = homePageId,
+                Title = "Weapsy",
+                MetaDescription = "Weapsy",
+                MetaKeywords = "Weapsy",
                 SiteLocalisations = new List<SiteLocalisation>
                 {
                     new SiteLocalisation
@@ -296,9 +334,31 @@ namespace Weapsy.Services.Installation
                         LanguageId = englishLanguageId
                     }
                 }
-            }, _updateSiteDetailsSiteValidator);
+            }, _updateSiteDetailsValidator);
 
             _siteRepository.Update(site);
+        }
+
+        public async Task EnsureSiteInstalled(string name)
+        {
+            if (!await _queryDispatcher.DispatchAsync<IsSiteInstalled, bool>(new IsSiteInstalled { Name = name }))
+                await InstallSite(name);
+        }
+
+        private async Task InstallSite(string name)
+        {
+            var siteId = Guid.NewGuid();
+            var englishLanguageId = Guid.NewGuid();
+            var mainMenuId = Guid.NewGuid();
+            var homePageId = Guid.NewGuid();
+
+            _commandSender.Send<CreateSite, Site>(new CreateSite
+            {
+                Id = siteId,
+                Name = "Default"
+            });
+
+            //.....
         }
     }
 }

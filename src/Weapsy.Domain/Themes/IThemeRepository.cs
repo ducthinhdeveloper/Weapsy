@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Themes
 {
@@ -9,7 +9,6 @@ namespace Weapsy.Domain.Themes
         Theme GetById(Guid id);
         Theme GetByName(string name);
         Theme GetByFolder(string folder);
-        ICollection<Theme> GetAll();
         int GetThemesCount();        
         void Create(Theme theme);
         void Update(Theme theme);

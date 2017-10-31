@@ -1,9 +1,9 @@
 using System;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Pages.Events
 {
-    public class PageHidden : Event
+    public class PageHidden : DomainEvent
     {
         public Guid SiteId { get; set; }
     }

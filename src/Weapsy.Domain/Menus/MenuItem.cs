@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Menus.Commands;
-using Weapsy.Infrastructure.Identity;
+using Weapsy.Domain.Roles.DefaultRoles;
 
 namespace Weapsy.Domain.Menus
 {
@@ -23,7 +23,8 @@ namespace Weapsy.Domain.Menus
 
         public MenuItem() {}
 
-        public MenuItem(AddMenuItem cmd, int sortOrder) : base(cmd.MenuItemId)
+        public MenuItem(AddMenuItem cmd, int sortOrder) 
+            : base(cmd.MenuItemId)
         {
             MenuId = cmd.MenuId;
             SortOrder = sortOrder;
@@ -83,7 +84,7 @@ namespace Weapsy.Domain.Menus
                 MenuItemPermissions.Add(new MenuItemPermission
                 {
                     MenuItemId = Id,
-                    RoleId = ((int)DefaultRoles.Everyone).ToString()
+                    RoleId = Everyone.Id
                 });
         }
 

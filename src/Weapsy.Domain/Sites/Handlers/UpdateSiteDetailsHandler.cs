@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Sites.Commands;
 using System;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Sites.Handlers
 {
@@ -18,7 +19,7 @@ namespace Weapsy.Domain.Sites.Handlers
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(UpdateSiteDetails cmd)
+        public IEnumerable<IEvent> Handle(UpdateSiteDetails cmd)
         {
             var site = _siteRepository.GetById(cmd.SiteId);
 

@@ -1,62 +1,52 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using Weapsy.Domain.Users;
+using Weapsy.Domain.Users.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
 using Weapsy.Mvc.Controllers;
-using Weapsy.Services.Identity;
+using Weapsy.Reporting.Users;
+using Weapsy.Reporting.Users.Queries;
 
 namespace Weapsy.Api
 {
     [Route("api/[controller]")]
     public class UserController : BaseAdminController
     {
-        private readonly UserManager<IdentityUser> _userManager;
-        private readonly IUserService _userService;
-        private readonly IRoleService _roleService;
+        private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
+        private readonly UserManager<Data.Entities.User> _userManager;
 
-        public UserController(UserManager<IdentityUser> userManager,
-            IUserService userService,
-            IRoleService roleService,
+        public UserController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,
+            UserManager<Data.Entities.User> userManager,
             IContextService contextService)
             : base(contextService)
         {
+            _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
             _userManager = userManager;
-            _userService = userService;
-            _roleService = roleService;
         }
 
         [HttpGet]
-        public IActionResult Get(int startIndex, int numberOfUsers)
+        public IActionResult Get()
         {
-            var query = new UsersQuery
-            {
-                StartIndex = startIndex,
-                NumberOfUsers = numberOfUsers
-            };
-
-            var model = _userService.GetUsersViewModel(query);
-
-            return Ok(model);
+            throw new NotImplementedException();
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(string id)
+        public IActionResult Get(Guid id)
         {
-            var user = await _userManager.FindByIdAsync(id);
-
-            if (user == null)
-                return NotFound();
-
-            return Ok(user);
+            throw new NotImplementedException();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post(string email)
+        public IActionResult Post(string email)
         {
-            await _userService.CreateUser(email);
-            return new NoContentResult();
+            throw new NotImplementedException();
         }
 
         [HttpPut]
@@ -68,25 +58,24 @@ namespace Weapsy.Api
 
         [HttpPut]
         [Route("{id}/add-to-role")]
-        public async Task<IActionResult> AddToRole(string id, [FromBody]string roleName)
+        public async Task<IActionResult> AddToRole(Guid id, [FromBody]string roleName)
         {
-            await _userService.AddUserToRole(id, roleName);
+            await _commandSender.SendAsync<AddUserToRole, User>(new AddUserToRole { Id = id, RoleName = roleName });
             return new NoContentResult();
         }
 
         [HttpPut]
         [Route("{id}/remove-from-role")]
-        public async Task<IActionResult> RemoveFromRole(string id, [FromBody]string roleName)
+        public async Task<IActionResult> RemoveFromRole(Guid id, [FromBody]string roleName)
         {
-            await _userService.RemoveUserFromRole(id, roleName);
+            await _commandSender.SendAsync<RemoveUserFromRole, User>(new RemoveUserFromRole { Id = id, RoleName = roleName });
             return new NoContentResult();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
+        public IActionResult Delete(Guid id)
         {
-            await _userService.DeleteUser(id);
-            return new NoContentResult();
+            throw new NotImplementedException();
         }
 
         [HttpGet("{email}")]
@@ -95,6 +84,38 @@ namespace Weapsy.Api
         {
             var isEmailUnique = await _userManager.FindByEmailAsync(email) == null;
             return Ok(isEmailUnique);
+        }
+
+        [HttpGet]
+        [Route("admin-list")]
+        public async Task<IActionResult> AdminList(int startIndex, int numberOfUsers)
+        {
+            var query = new GetUsersAdminViewModel
+            {
+                StartIndex = startIndex,
+                NumberOfUsers = numberOfUsers
+            };
+
+            var model = await _queryDispatcher.DispatchAsync<GetUsersAdminViewModel, UsersAdminViewModel>(query);
+
+            return Ok(model);
+        }
+
+        [HttpGet]
+        [Route("{id}/admin-edit")]
+        public async Task<IActionResult> AdminEdit(Guid id)
+        {
+            var query = new GetUserAdminModel
+            {
+                Id = id
+            };
+
+            var model = await _queryDispatcher.DispatchAsync<GetUserAdminModel, UserAdminModel>(query);
+
+            if (model == null)
+                return NotFound();
+
+            return Ok(model);
         }
     }
 }

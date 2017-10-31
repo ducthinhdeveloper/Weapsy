@@ -1,6 +1,1 @@
-{
-  "projects": [ "src", "tests", "apps/text", "apps/text/src" ],
-  "sdk": {
-    "version": "1.0.0-preview2-003131"
-  }
-}
+{"projects":["src","test","src/Apps"]}

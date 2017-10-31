@@ -1,72 +1,35 @@
-﻿using FluentValidation;
-using System;
+﻿using System.Collections.Generic;
 using Weapsy.Domain.Apps;
 using Weapsy.Domain.ModuleTypes;
 using Weapsy.Domain.ModuleTypes.Commands;
 using Weapsy.Domain.Apps.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
+using Weapsy.Reporting.Apps.Queries;
 
 namespace Weapsy.Services.Installation
 {
     public class AppInstallationService : IAppInstallationService
     {
-        private readonly IAppRepository _appRepository;
-        private readonly IValidator<CreateApp> _createAppValidator;
-        private readonly IModuleTypeRepository _moduleTypeRepository;
-        private readonly IValidator<CreateModuleType> _createModuleTypeValidator;
+        private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
 
-        public AppInstallationService(IAppRepository appRepository,
-            IValidator<CreateApp> createAppValidator,
-            IModuleTypeRepository moduleTypeRepository,
-            IValidator<CreateModuleType> createModuleTypeValidator)
+        public AppInstallationService(ICommandSender commandSender, 
+            IQueryDispatcher queryDispatcher)
         {
-            _appRepository = appRepository;
-            _createAppValidator = createAppValidator;
-            _moduleTypeRepository = moduleTypeRepository;
-            _createModuleTypeValidator = createModuleTypeValidator;
+            _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
         }
 
-        public void VerifyAppInstallation()
+        public void EnsureAppInstalled(CreateApp createApp, IEnumerable<CreateModuleType> createModuleTypes)
         {
-            if (_appRepository.GetByName("Text") == null)
-                InstallDefaultApps();
-        }
+            if (_queryDispatcher.Dispatch<IsAppInstalled, bool>(new IsAppInstalled { Name = createApp.Name }))
+                return;
 
-        public void InstallDefaultApps()
-        {
-            // temporary implementation, it will be based on configuration files
+            _commandSender.Send<CreateApp, App>(createApp, false);
 
-            // ===== Text ===== //
-
-            var textAppId = Guid.NewGuid();
-
-            // App
-
-            var textApp = App.CreateNew(new CreateApp
-            {
-                Id = textAppId,
-                Name = "Text",
-                Description = "Text",
-                Folder = "Text"
-            }, _createAppValidator);
-
-            _appRepository.Create(textApp);
-
-            // Module Type
-
-            var textModuleType = ModuleType.CreateNew(new CreateModuleType
-            {
-                AppId = textAppId,
-                Id = Guid.NewGuid(),
-                Name = "Text",
-                Title = "Text Module",
-                Description = "Text Module",
-                ViewType = ViewType.ViewComponent,
-                ViewName = "TextModule",
-                EditType = EditType.Modal,
-                EditUrl = "Text/Home/Index"
-            }, _createModuleTypeValidator);
-
-            _moduleTypeRepository.Create(textModuleType);
+            foreach (var createModuleType in createModuleTypes)
+                _commandSender.Send<CreateModuleType, ModuleType>(createModuleType, false);
         }
     }
 }

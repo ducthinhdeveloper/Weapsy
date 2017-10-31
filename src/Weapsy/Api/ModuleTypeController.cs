@@ -1,45 +1,47 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
-using Weapsy.Infrastructure.Dispatcher;
 using Weapsy.Domain.ModuleTypes;
 using Weapsy.Domain.ModuleTypes.Commands;
 using Weapsy.Domain.ModuleTypes.Rules;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
 using Weapsy.Mvc.Controllers;
-using Weapsy.Reporting.ModuleTypes;
+using Weapsy.Reporting.Apps;
+using Weapsy.Reporting.Apps.Queries;
 
 namespace Weapsy.Api
 {
     [Route("api/[controller]")]
     public class ModuleTypeController : BaseAdminController
     {
-        private readonly IModuleTypeFacade _moduleTypeFacade;
         private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
         private readonly IModuleTypeRules _moduleTypeRules;
 
-        public ModuleTypeController(IModuleTypeFacade moduleTypeFacade,
-            ICommandSender commandSender,
+        public ModuleTypeController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,            
             IModuleTypeRules moduleTypeRules,
             IContextService contextService)
             : base(contextService)
         {
-            _moduleTypeFacade = moduleTypeFacade;
             _commandSender = commandSender;
+            _queryDispatcher = queryDispatcher;
             _moduleTypeRules = moduleTypeRules;
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> Get()
-        //{
-        //    var list = await Task.Run(() => _moduleTypeRepository.GetAll());
-        //    return Ok(list);
-        //}
+        [HttpGet]
+        public IActionResult Get()
+        {
+            throw new NotImplementedException();
+        }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CreateModuleType model)
+        public IActionResult Post([FromBody] CreateModuleType model)
         {
-            await Task.Run(() => _commandSender.Send<CreateModuleType, ModuleType>(model));
+            _commandSender.Send<CreateModuleType, ModuleType>(model);
             return new NoContentResult();
         }
 
@@ -68,10 +70,14 @@ namespace Weapsy.Api
         }
 
         [HttpGet]
-        [Route("{id}/admin-list")]
-        public async Task<IActionResult> AdminList()
+        [Route("{appId}/admin-list")]
+        public async Task<IActionResult> AdminList(Guid appId)
         {
-            var model = await Task.Run(() => _moduleTypeFacade.GetAllForAdmin());
+            var model = await _queryDispatcher.DispatchAsync<GetModuleTypeAdminListModel, IEnumerable<ModuleTypeAdminListModel>>(new GetModuleTypeAdminListModel
+            {
+                AppId = appId
+            });
+
             return Ok(model);
         }
 
@@ -79,8 +85,14 @@ namespace Weapsy.Api
         [Route("{id}/admin-edit")]
         public async Task<IActionResult> AdminEdit(Guid id)
         {
-            var model = await Task.Run(() => _moduleTypeFacade.GetAdminModel(id));
-            if (model == null) return NotFound();
+            var model = await _queryDispatcher.DispatchAsync<GetModuleTypeAdminModel, ModuleTypeAdminModel>(new GetModuleTypeAdminModel
+            {
+                Id = id
+            });
+
+            if (model == null)
+                return NotFound();
+
             return Ok(model);
         }
     }

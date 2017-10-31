@@ -3,29 +3,31 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Weapsy.Domain.Sites;
 using Weapsy.Domain.Sites.Commands;
-using Weapsy.Infrastructure.Dispatcher;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
 using Weapsy.Mvc.Controllers;
 using Weapsy.Reporting.Sites;
+using Weapsy.Reporting.Sites.Queries;
 
 namespace Weapsy.Areas.Admin.Controllers
 {
     [Area("Admin")]
     public class SiteController : BaseAdminController
     {
-        private readonly ISiteFacade _siteFacade;
         private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
         private readonly IMapper _mapper;
 
-        public SiteController(ISiteFacade siteFacade, 
-            ICommandSender commandSender, 
+        public SiteController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,
             IMapper mapper,
             IContextService contextService)
             : base(contextService)
         {
-            _siteFacade = siteFacade;
             _commandSender = commandSender;
             _mapper = mapper;
+            _queryDispatcher = queryDispatcher;
         }
 
         public IActionResult Index()
@@ -35,7 +37,7 @@ namespace Weapsy.Areas.Admin.Controllers
 
         public async Task<IActionResult> Settings()
         {
-            var model = await Task.Run(() => _siteFacade.GetAdminModel(SiteId));
+            var model = await _queryDispatcher.DispatchAsync<GetAdminModel, SiteAdminModel>(new GetAdminModel { Id = SiteId });
 
             if (model == null)
                 return NotFound();
@@ -43,11 +45,11 @@ namespace Weapsy.Areas.Admin.Controllers
             return View("Edit", model);
         }
 
-        public async Task<IActionResult> Update(SiteAdminModel model)
+        public IActionResult Update(SiteAdminModel model)
         {
             var command = _mapper.Map<UpdateSiteDetails>(model);
             command.SiteId = SiteId;
-            await Task.Run(() => _commandSender.Send<UpdateSiteDetails, Site>(command));
+            _commandSender.Send<UpdateSiteDetails, Site>(command);
             return new NoContentResult();
         }
     }

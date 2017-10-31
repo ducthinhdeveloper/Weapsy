@@ -15,9 +15,11 @@ namespace Weapsy.Reporting.Sites
         public Guid ThemeId { get; set; }
         public Guid PageTemplateId { get; set; }
         public Guid ModuleTemplateId { get; set; }
+        public bool AddLanguageSlug { get; set; }
 
         public List<SiteLocalisationAdminModel> SiteLocalisations { get; set; } = new List<SiteLocalisationAdminModel>();
         public List<PageListAdminModel> Pages { get; set; } = new List<PageListAdminModel>();
+        public List<ThemeListAdminModel> Themes { get; set; } = new List<ThemeListAdminModel>();
     }
 
     public class SiteLocalisationAdminModel
@@ -32,6 +34,12 @@ namespace Weapsy.Reporting.Sites
     }
 
     public class PageListAdminModel
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+    }
+
+    public class ThemeListAdminModel
     {
         public Guid Id { get; set; }
         public string Name { get; set; }

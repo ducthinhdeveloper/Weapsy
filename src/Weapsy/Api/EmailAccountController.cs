@@ -1,76 +1,81 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Weapsy.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Weapsy.Reporting.EmailAccounts;
 using Weapsy.Domain.EmailAccounts.Commands;
 using Weapsy.Domain.EmailAccounts;
-using Weapsy.Infrastructure.Dispatcher;
 using Weapsy.Domain.EmailAccounts.Rules;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
+using Weapsy.Reporting.EmailAccounts.Queries;
 
 namespace Weapsy.Api
 {
     [Route("api/[controller]")]
     public class EmailAccountController : BaseAdminController
     {
-        private readonly IEmailAccountFacade _emailAccountFacade;
         private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;
         private readonly IEmailAccountRules _emailAccountRules;
 
-        public EmailAccountController(IEmailAccountFacade emailAccountFacade,
-            ICommandSender commandSender,
+        public EmailAccountController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,
             IEmailAccountRules emailAccountRules,
             IContextService contextService)
             : base(contextService)
         {
-            _emailAccountFacade = emailAccountFacade;
             _commandSender = commandSender;
-            _emailAccountRules = emailAccountRules;
+            _queryDispatcher = queryDispatcher;
+            _emailAccountRules = emailAccountRules;            
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            var emailAccounts = _emailAccountFacade.GetAll(SiteId);
-            return Ok(emailAccounts);
+            var model = await _queryDispatcher.DispatchAsync<GetAllEmailAccounts, IEnumerable<EmailAccountModel>>(new GetAllEmailAccounts { SiteId = SiteId });
+            return Ok(model);
         }
 
         [HttpGet("{id}")]
-        public IActionResult Get(Guid id)
+        public async Task<IActionResult> Get(Guid id)
         {
-            var emailAccount = _emailAccountFacade.Get(SiteId, id);
-            if (emailAccount == null)
+            var model = await _queryDispatcher.DispatchAsync<GetEmailAccount, EmailAccountModel>(new GetEmailAccount { SiteId = SiteId, Id = id });
+
+            if (model == null)
                 return NotFound();
-            return Ok(emailAccount);
+
+            return Ok(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CreateEmailAccount model)
+        public IActionResult Post([FromBody] CreateEmailAccount model)
         {
             model.SiteId = SiteId;
             model.Id = Guid.NewGuid();
-            await Task.Run(() => _commandSender.Send<CreateEmailAccount, EmailAccount>(model));
+            _commandSender.Send<CreateEmailAccount, EmailAccount>(model);
             return new NoContentResult();
         }
 
         [HttpPut]
         [Route("{id}/update")]
-        public async Task<IActionResult> UpdateDetails([FromBody] UpdateEmailAccountDetails model)
+        public IActionResult UpdateDetails([FromBody] UpdateEmailAccountDetails model)
         {
             model.SiteId = SiteId;
-            await Task.Run(() => _commandSender.Send<UpdateEmailAccountDetails, EmailAccount>(model));
+            _commandSender.Send<UpdateEmailAccountDetails, EmailAccount>(model);
             return new NoContentResult();
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public IActionResult Delete(Guid id)
         {
-            await Task.Run(() => _commandSender.Send<DeleteEmailAccount, EmailAccount>(new DeleteEmailAccount
+           _commandSender.Send<DeleteEmailAccount, EmailAccount>(new DeleteEmailAccount
             {
                 SiteId = SiteId,
                 Id = id
-            }));
+            });
             return new NoContentResult();
         }
 

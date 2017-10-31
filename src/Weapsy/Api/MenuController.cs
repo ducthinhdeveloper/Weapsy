@@ -6,109 +6,120 @@ using Microsoft.AspNetCore.Mvc;
 using Weapsy.Domain.Menus.Commands;
 using Weapsy.Domain.Menus;
 using Weapsy.Reporting.Menus;
-using Weapsy.Infrastructure.Dispatcher;
 using Weapsy.Domain.Menus.Rules;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Queries;
 using Weapsy.Mvc.Context;
+using Weapsy.Reporting.Menus.Queries;
 
 namespace Weapsy.Api
 {
     [Route("api/[controller]")]
     public class MenuController : BaseAdminController
     {
-        private readonly IMenuFacade _menuFacade;
         private readonly ICommandSender _commandSender;
+        private readonly IQueryDispatcher _queryDispatcher;       
         private readonly IMenuRules _menuRules;
 
-        public MenuController(IMenuFacade menuFacade,
-            ICommandSender commandSender,
+        public MenuController(ICommandSender commandSender,
+            IQueryDispatcher queryDispatcher,          
             IMenuRules menuRules,
             IContextService contextService)
             : base(contextService)
         {
-            _menuFacade = menuFacade;
             _commandSender = commandSender;
-            _menuRules = menuRules;
+            _queryDispatcher = queryDispatcher;
+            _menuRules = menuRules;            
         }
 
         [HttpGet]
         [Route("{name}")]
         public async Task<IActionResult> Get(string name)
         {
-            var menu = await Task.Run(()=> _menuFacade.GetByName(SiteId, name));
-            return Ok(menu);
+            var model = await _queryDispatcher.DispatchAsync<GetViewModel, IEnumerable<MenuViewModel>>(new GetViewModel
+            {
+                SiteId = SiteId,
+                Name = name
+            });
+            return Ok(model);
         }
 
         [HttpGet]
         [Route("admin")]
         public async Task<IActionResult> GetAllForAdmin()
         {
-            var menus = await Task.Run(() => _menuFacade.GetAllForAdmin(SiteId));
-            return Ok(menus);
+            var models = await _queryDispatcher.DispatchAsync<GetAllForAdmin, IEnumerable<MenuAdminModel>>(new GetAllForAdmin
+            {
+                SiteId = SiteId
+            });
+            return Ok(models);
         }
-
-        [HttpGet()]
         [Route("{id}/items")]
         public async Task<IActionResult> GetItemsForAdmin(Guid id)
         {
-            var menuItems = await Task.Run(() => _menuFacade.GetMenuItemsForAdminList(SiteId, id));
-            return Ok(menuItems);
+            var models = await _queryDispatcher.DispatchAsync<GetItemsForAdmin, IEnumerable<MenuItemAdminListModel>>(new GetItemsForAdmin
+            {
+                SiteId = SiteId,
+                Id = id
+            });
+            return Ok(models);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] string name)
+        public IActionResult Post([FromBody] string name)
         {
             var newMenuId = Guid.NewGuid();
-            await Task.Run(() => _commandSender.Send<CreateMenu, Menu>(new CreateMenu
+            _commandSender.Send<CreateMenu, Menu>(new CreateMenu
             {
                 SiteId = SiteId,
                 Id = newMenuId,
                 Name = name
-            }));
+            });
             return Ok(newMenuId);
         }
 
         [HttpPut]
         [Route("{id}/addItem")]
-        public async Task<IActionResult> AddItem(Guid id, [FromBody] AddMenuItem model)
+        public IActionResult AddItem(Guid id, [FromBody] AddMenuItem model)
         {
             model.SiteId = SiteId;
             model.MenuId = id;
             model.MenuItemId = Guid.NewGuid();
 
-            await Task.Run(() => _commandSender.Send<AddMenuItem, Menu>(model));
+            _commandSender.Send<AddMenuItem, Menu>(model);
 
             return new NoContentResult();
         }
 
         [HttpPut]
         [Route("{id}/updateItem")]
-        public async Task<IActionResult> UpdateItem(Guid id, [FromBody] UpdateMenuItem model)
+        public IActionResult UpdateItem(Guid id, [FromBody] UpdateMenuItem model)
         {
             model.SiteId = SiteId;
             model.MenuId = id;
-            await Task.Run(() => _commandSender.Send<UpdateMenuItem, Menu>(model));
+            _commandSender.Send<UpdateMenuItem, Menu>(model);
             return new NoContentResult();
         }
 
         [HttpPut]
         [Route("{id}/reorder")]
-        public async Task<IActionResult> Reorder(Guid id, [FromBody] List<ReorderMenuItems.MenuItem> model)
+        public IActionResult Reorder(Guid id, [FromBody] List<ReorderMenuItems.MenuItem> model)
         {
             var command = new ReorderMenuItems { SiteId = SiteId, Id = id, MenuItems = model };
-            await Task.Run(() => _commandSender.Send<ReorderMenuItems, Menu>(command));
+            _commandSender.Send<ReorderMenuItems, Menu>(command);
             return new NoContentResult();
         }
 
         [HttpDelete]
         [Route("{id}/item/{itemId}")]
-        public async Task<IActionResult> DeleteItem(Guid id, Guid itemId)
+        public IActionResult DeleteItem(Guid id, Guid itemId)
         {
-            await Task.Run(() => _commandSender.Send<RemoveMenuItem, Menu>(new RemoveMenuItem
+            _commandSender.Send<RemoveMenuItem, Menu>(new RemoveMenuItem
             {
                 SiteId = SiteId,
                 MenuId = id,
                 MenuItemId = itemId
-            }));
+            });
             return new NoContentResult();
         }
 
@@ -129,28 +140,56 @@ namespace Weapsy.Api
         }
 
         [HttpGet]
-        [Route("{id}/admin-list")]
+        [Route("admin-list")]
         public async Task<IActionResult> AdminList()
         {
-            var model = await Task.Run(() => _menuFacade.GetAllForAdmin(SiteId));
-            return Ok(model);
+            var models = await _queryDispatcher.DispatchAsync<GetAllForAdmin, IEnumerable<MenuAdminModel>>(new GetAllForAdmin { SiteId = SiteId });
+            return Ok(models);
         }
 
         [HttpGet]
         [Route("{id}/admin-edit")]
         public async Task<IActionResult> AdminEdit(Guid id)
         {
-            var model = await Task.Run(() => _menuFacade.GetForAdmin(SiteId, id));
-            if (model == null) return NotFound();
+            var model = await _queryDispatcher.DispatchAsync<GetForAdmin, MenuAdminModel>(new GetForAdmin
+            {
+                SiteId = SiteId,
+                Id = id
+            });
+
+            if (model == null)
+                return NotFound();
+
             return Ok(model);
         }
 
-        [HttpGet()]
+        [HttpGet]
         [Route("{id}/admin-edit-item/{itemId}")]
         public async Task<IActionResult> AdminEditItem(Guid id, Guid itemId)
         {
-            var item = await Task.Run(() => _menuFacade.GetItemForAdmin(SiteId, id, itemId));
-            return Ok(item);
+            var model = await _queryDispatcher.DispatchAsync<GetItemForAdmin, MenuItemAdminModel>(new GetItemForAdmin
+            {
+                SiteId = SiteId,
+                MenuId = id,
+                MenuItemId = itemId
+            });
+
+            if (model == null)
+                return NotFound();
+
+            return Ok(model);
+        }
+
+        [HttpGet]
+        [Route("{id}/admin-edit-default-item")]
+        public async Task<IActionResult> AdminEditDefaultItem(Guid id)
+        {
+            var model = await _queryDispatcher.DispatchAsync<GetDefaultItemForAdmin, MenuItemAdminModel>(new GetDefaultItemForAdmin
+            {
+                SiteId = SiteId,
+                MenuId = id
+            });
+            return Ok(model);
         }
     }
 }

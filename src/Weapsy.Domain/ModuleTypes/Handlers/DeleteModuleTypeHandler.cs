@@ -1,8 +1,9 @@
 using FluentValidation;
 using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.ModuleTypes.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.ModuleTypes.Handlers
 {
@@ -17,7 +18,7 @@ namespace Weapsy.Domain.ModuleTypes.Handlers
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(DeleteModuleType command)
+        public IEnumerable<IEvent> Handle(DeleteModuleType command)
         {
             var moduleType = _moduleTypeRepository.GetById(command.Id);
 

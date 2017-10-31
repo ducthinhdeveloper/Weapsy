@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Templates
 {
@@ -9,7 +8,6 @@ namespace Weapsy.Domain.Templates
         Template GetById(Guid id);
         Template GetByName(string name);
         Template GetByViewName(string viewName);
-        IEnumerable<Template> GetAll();
         void Create(Template template);
         void Update(Template template);
     }

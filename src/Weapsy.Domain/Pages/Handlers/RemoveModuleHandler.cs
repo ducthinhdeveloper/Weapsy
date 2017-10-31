@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 using Weapsy.Domain.Modules;
 using Weapsy.Domain.Modules.Commands;
 using Weapsy.Domain.Pages.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
+
 //using System.Transactions;
 
 namespace Weapsy.Domain.Pages.Handlers
@@ -27,9 +30,9 @@ namespace Weapsy.Domain.Pages.Handlers
             _removePageModuleValidator = removePageModuleValidator;
         }
 
-        public ICollection<IEvent> Handle(RemoveModule cmd)
+        public IEnumerable<IEvent> Handle(RemoveModule cmd)
         {
-            var events = new List<IEvent>();
+            var events = new List<IDomainEvent>();
 
             //using (var scope = new TransactionScope(TransactionScopeOption.Suppress))
             //{

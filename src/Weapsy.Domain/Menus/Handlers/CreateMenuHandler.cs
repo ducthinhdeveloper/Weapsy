@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using FluentValidation;
-using Weapsy.Infrastructure.Domain;
 using Weapsy.Domain.Menus.Commands;
+using Weapsy.Framework.Commands;
+using Weapsy.Framework.Events;
 
 namespace Weapsy.Domain.Menus.Handlers
 {
@@ -17,7 +18,7 @@ namespace Weapsy.Domain.Menus.Handlers
             _validator = validator;
         }
 
-        public ICollection<IEvent> Handle(CreateMenu command)
+        public IEnumerable<IEvent> Handle(CreateMenu command)
         {
             var menu = Menu.CreateNew(command, _validator);
 

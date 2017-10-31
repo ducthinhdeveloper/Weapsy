@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Pages.Events
 {
-    public class PageCreated : Event
+    public class PageCreated : DomainEvent
     {
         public Guid SiteId { get; set; }
         public string Name { get; set; }
@@ -13,7 +13,8 @@ namespace Weapsy.Domain.Pages.Events
         public string MetaDescription { get; set; }
         public string MetaKeywords { get; set; }
         public PageStatus Status { get; set; }
-        public IEnumerable<PageLocalisation> PageLocalisations { get; set; }
-        public IEnumerable<PagePermission> PagePermissions { get; set; }
+        public IEnumerable<PageLocalisation> PageLocalisations { get; set; } = new List<PageLocalisation>();
+        public IEnumerable<PagePermission> PagePermissions { get; set; } = new List<PagePermission>();
+        public IEnumerable<Guid> MenuIds { get; set; } = new List<Guid>();
     }
 }

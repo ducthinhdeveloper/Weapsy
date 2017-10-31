@@ -1,8 +1,8 @@
-﻿using Weapsy.Infrastructure.Domain;
+﻿using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Sites.Events
 {
-    public class SiteCreated : Event
+    public class SiteCreated : DomainEvent
     {
         public string Name { get; set; }
         public SiteStatus Status { get; set; }

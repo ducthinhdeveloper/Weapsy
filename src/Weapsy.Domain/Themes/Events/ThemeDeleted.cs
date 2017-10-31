@@ -1,8 +1,8 @@
-using Weapsy.Infrastructure.Domain;
+using Weapsy.Framework.Domain;
 
 namespace Weapsy.Domain.Themes.Events
 {
-    public class ThemeDeleted : Event
+    public class ThemeDeleted : DomainEvent
     {
     }
 }
