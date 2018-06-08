@@ -1,16 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Weapsy.Data.Entities;
-using Weapsy.Framework.Extensions;
 
 namespace Weapsy.Data.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddEntityFramework(this IServiceCollection services, IConfigurationRoot configuration)
+        public static IServiceCollection AddEntityFramework(this IServiceCollection services, IConfiguration configuration)
         {
             var dataProviderConfig = configuration.GetSection("Data")["Provider"];
             var connectionStringConfig = configuration.GetConnectionString("DefaultConnection");
@@ -21,10 +20,6 @@ namespace Weapsy.Data.Extensions
             var dataProvider = dataProviders.SingleOrDefault(x => x.Provider.ToString() == dataProviderConfig);
 
             dataProvider.RegisterDbContext(services, connectionStringConfig);
-
-            services.AddIdentity<User, Role>()
-                .AddEntityFrameworkStores<WeapsyDbContext, Guid>()
-                .AddDefaultTokenProviders();
 
             return services;
         }
@@ -46,5 +41,22 @@ namespace Weapsy.Data.Extensions
 
         //    return services;
         //}
+
+        private static IEnumerable<T> GetImplementationsOf<T>(this Assembly assembly)
+        {
+            var result = new List<T>();
+
+            var types = assembly.GetTypes()
+                .Where(t => t.GetTypeInfo().IsClass && !t.GetTypeInfo().IsAbstract && typeof(T).IsAssignableFrom(t))
+                .ToList();
+
+            foreach (var type in types)
+            {
+                var instance = (T)Activator.CreateInstance(type);
+                result.Add(instance);
+            }
+
+            return result;
+        }
     }
 }

@@ -6,7 +6,7 @@ using Weapsy.Reporting.Users;
 using System.Linq;
 using System;
 using Microsoft.EntityFrameworkCore;
-using Weapsy.Framework.Queries;
+using Weapsy.Cqrs.Queries;
 
 namespace Weapsy.Data.Reporting.Users
 {
@@ -27,10 +27,10 @@ namespace Weapsy.Data.Reporting.Users
             {
                 var totalRecords = context.Users.Count();
 
-                var allRoles = await context.Roles.ToListAsync();
+                var allRoles = new List<string>(); //await context.Roles.ToListAsync();
 
                 var q = context.Users
-                    .Include(x => x.Roles)
+                    //.Include(x => x.Roles)
                     .OrderBy(x => x.Email)
                     .Skip(query.StartIndex);
 
@@ -45,10 +45,10 @@ namespace Weapsy.Data.Reporting.Users
                     var userRoleNames = new List<string>();
                     foreach (var roleId in user.Roles)
                     {
-                        var userRole = allRoles.FirstOrDefault(x => x.Id.ToString() == roleId);
+                        var userRole = allRoles.FirstOrDefault(x => x.ToString() == roleId);
                         if (userRole != null)
                         {
-                            userRoleNames.Add(userRole.Name);
+                            userRoleNames.Add(userRole);
                         }
                     }
                     user.Roles = userRoleNames;

@@ -1,23 +1,20 @@
-﻿using AutoMapper;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Weapsy.Reporting.Roles.Queries;
 using System.Collections.Generic;
-using Weapsy.Data.Entities;
 using Microsoft.AspNetCore.Identity;
 using Weapsy.Domain.Roles.DefaultRoles;
-using Weapsy.Framework.Queries;
+using Weapsy.Cqrs.Queries;
+using Weapsy.Data.TempIdentity;
 
 namespace Weapsy.Data.Reporting.Roles
 {
     public class GetRoleNamesFromRoleIdsHandler : IQueryHandlerAsync<GetRoleNamesFromRoleIds, IEnumerable<string>>
     {
-        private readonly RoleManager<Role> _roleManager;
-        private readonly IMapper _mapper;
+        private readonly RoleManager<ApplicationRole> _roleManager;
 
-        public GetRoleNamesFromRoleIdsHandler(RoleManager<Role> roleManager, IMapper mapper)
+        public GetRoleNamesFromRoleIdsHandler(RoleManager<ApplicationRole> roleManager)
         {
             _roleManager = roleManager;
-            _mapper = mapper;
         }
 
         public async Task<IEnumerable<string>> RetrieveAsync(GetRoleNamesFromRoleIds query)

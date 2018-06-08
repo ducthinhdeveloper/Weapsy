@@ -4,7 +4,7 @@ using Weapsy.Reporting.Users.Queries;
 using Weapsy.Reporting.Users;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
-using Weapsy.Framework.Queries;
+using Weapsy.Cqrs.Queries;
 
 namespace Weapsy.Data.Reporting.Users
 {
@@ -25,7 +25,7 @@ namespace Weapsy.Data.Reporting.Users
             {
                 var model = new UserAdminModel
                 {
-                    AllRoles = await context.Roles.Select(x => x.Name).ToListAsync()
+                    //AllRoles = await context.Roles.Select(x => x.Name).ToListAsync()
                 };
 
                 return model;
